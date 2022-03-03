@@ -173,9 +173,12 @@ def construct_dataset(V=10, dt=1, batch_size=16):
         for nyg in range(nyd, 89):
             dataset_X.append(data[:, nyg, :] + data[:, nyd, :])
             dataset_Y.append(torch.tensor([(nyg+nyd)/2/89, (nyg-nyd)/89], dtype=torch.double))
+    dataset_X = torch.stack(dataset_X)
+    dataset_Y = torch.stack(dataset_Y)
+    # torch.save(dataset_X, 'dataset_X.pt')
+    # torch.save(dataset_Y, 'dataset_Y.pt')
 
-    dataset = TensorDataset(torch.stack(dataset_X),
-                            torch.stack(dataset_Y))
+    dataset = TensorDataset(dataset_X, dataset_Y)
     # [B, L, D]
     n_train = len(dataset_X)
     split = n_train // 4

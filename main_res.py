@@ -4,12 +4,15 @@ from resnet18 import ResNet18
 import time
 from tqdm import tqdm
 
+use_cuda = torch.cuda.is_available()
 train_loader, valid_loader = construct_dataset(V=10, batch_size=32)
 data, label = next(iter(train_loader))  # [B, L, D]
 print(data)
 model = ResNet18().double()
 # x = model(torch.randn(4, 10, 224).double())
 x = model(data.transpose(1, 2))
+if use_cuda:
+    model.cuda()
 
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=0.001)
 criterion = torch.nn.MSELoss()
@@ -27,6 +30,8 @@ def evaluate():
     correct_e_R = correct_y_c = eval_loss = 0
     for data, label in tqdm(valid_loader, mininterval=0.2,
                 desc='Evaluate Processing', leave=False):
+        if use_cuda:
+            data, label = data.cuda(), label.cuda()
         pred = model(data.transpose(1, 2))
 
         loss = criterion(pred, label)

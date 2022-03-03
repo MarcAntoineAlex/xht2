@@ -35,17 +35,17 @@ class ResidualBlock(nn.Module):
 class ResNet(nn.Module):
     def __init__(self, ResidualBlock, num_classes=2):
         super(ResNet, self).__init__()
-        self.inchannel = 32
+        self.inchannel = 64
         self.conv1 = nn.Sequential(
-            nn.Conv1d(10, 32, kernel_size=7, stride=2, padding=3, bias=False),
-            nn.BatchNorm1d(32),
+            nn.Conv1d(10, 64, kernel_size=7, stride=2, padding=3, bias=False),
+            nn.BatchNorm1d(64),
             nn.ReLU(),
         )
-        self.layer1 = self.make_layer(ResidualBlock, 32, 2, stride=1)
-        self.layer2 = self.make_layer(ResidualBlock, 64, 2, stride=2)
-        self.layer3 = self.make_layer(ResidualBlock, 128, 2, stride=2)
-        self.layer4 = self.make_layer(ResidualBlock, 256, 2, stride=2)
-        self.fc = nn.Linear(2304, num_classes)
+        self.layer1 = self.make_layer(ResidualBlock, 64, 2, stride=1)
+        self.layer2 = self.make_layer(ResidualBlock, 128, 2, stride=2)
+        self.layer3 = self.make_layer(ResidualBlock, 256, 2, stride=2)
+        self.layer4 = self.make_layer(ResidualBlock, 512, 2, stride=2)
+        self.fc = nn.Linear(4608, num_classes)
 
     def make_layer(self, block, channels, num_blocks, stride):
         strides = [stride] + [1] * (num_blocks - 1)   #strides=[1,1]
