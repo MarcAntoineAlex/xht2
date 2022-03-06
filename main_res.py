@@ -51,6 +51,8 @@ def train():
     for data, label in tqdm(train_loader, mininterval=1,
                 desc='Train Processing', leave=False):
         optimizer.zero_grad()
+        if use_cuda:
+            data, label = data.cuda(), label.cuda()
         target = model(data.transpose(1, 2))
         loss = criterion(target, label)
 
