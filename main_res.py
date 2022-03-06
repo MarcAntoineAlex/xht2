@@ -28,22 +28,26 @@ accuracy = []
 def evaluate():
     model.eval()
     correct_e_R = correct_y_c = eval_loss = 0
+    preds, labels = [], []
     for data, label in tqdm(valid_loader, mininterval=0.2,
                 desc='Evaluate Processing', leave=False):
         if use_cuda:
             data, label = data.cuda(), label.cuda()
         pred = model(data.transpose(1, 2))
+        preds.append(pred)
+        labels.append(label)
+    preds = torch.cat(preds, dim=0)
+    labels = torch.cat(labels, dim=0)
+    eval_loss = criterion(preds, labels).item()
+    for i in range(preds.shape[0]):
+        if torch.abs(preds[i, 0] - labels[i, 0]).item() <= 1/89:
+            correct_y_c += 1
+        if torch.abs(preds[i, 1] - labels[i, 1]).item() <= 1/89:
+            correct_e_R += 1
+    avg_error_e_R = (preds[:, 1] - labels[:, 1]).mean().item()
+    avg_error_y_c = (preds[:, 0] - labels[:, 0]).mean().item()
 
-        loss = criterion(pred, label)
-        eval_loss += loss.item()
-        for i in range(data.shape[0]):
-            if torch.abs(pred[i, 0] - label[i, 0]).item() <= 0.5/89:
-                correct_y_c += 1
-            if torch.abs(pred[i, 1] - label[i, 1]).item() <= 0.5/89:
-                correct_e_R += 1
-    print(pred)
-
-    return eval_loss, correct_y_c/32/len(valid_loader), correct_e_R/32/len(valid_loader)
+    return eval_loss, correct_y_c/preds.shape[0], correct_e_R/preds.shape[0], avg_error_e_R, avg_error_y_c
 
 def train():
     model.train()
@@ -80,12 +84,12 @@ try:
         print('| start of epoch {:3d} | time: {:2.2f}s | loss {:5.6f}'.format(epoch, time.time() - epoch_start_time, loss))
 
         epoch_start_time = time.time()
-        loss, y_c_acc, e_R_acc = evaluate()
+        loss, y_c_acc, e_R_acc, avg_error_e_R, avg_error_y_c = evaluate()
         valid_loss.append(loss*1000.)
 
         print('-' * 90)
-        print('| end of epoch {:3d} | time: {:2.2f}s | loss {:.4f} | y_c_acc: {:.4f} | e_R_acc: {:.4f}'.format(
-            epoch, time.time() - epoch_start_time, loss, y_c_acc, e_R_acc))
+        print('| end of epoch {:3d} | time: {:2.2f}s | loss {:.4f} | y_c_acc: {:.4f} err: {:.4f}  | e_R_acc: {:.4f} err {:.4f}'.format(
+            epoch, time.time() - epoch_start_time, loss, y_c_acc, avg_error_y_c, e_R_acc, avg_error_e_R))
         print('-' * 90)
 
 except KeyboardInterrupt:
