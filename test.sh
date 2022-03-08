@@ -5,8 +5,8 @@
 #SBATCH --cpus-per-task=4
 #SBATCH --gres=gpu:V100:1
 #SBATCH -J scinet
-#SBATCH -o qslog/job-%j.log
-#SBATCH -e qslog/job-%j.err
+#SBATCH -o log/%j.log
+#SBATCH -e log/%j.err
 # shellcheck disable=SC2046
 # shellcheck disable=SC2006
 echo Time is `date`
@@ -26,4 +26,4 @@ export NCCL_IB_DISABLE=1
 export MKL_THREADING_LAYER=GNU
 export CUDA_HOME=/usr/local/cuda-10.2
 # sugon does not support infiniband
-srun -u main_res.py
+srun python -u main_res.py
