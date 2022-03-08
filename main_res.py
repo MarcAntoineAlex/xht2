@@ -44,8 +44,8 @@ def evaluate():
             correct_y_c += 1
         if torch.abs(preds[i, 1] - labels[i, 1]).item() <= 1/89:
             correct_e_R += 1
-    avg_error_e_R = (preds[:, 1] - labels[:, 1]).mean().item()
-    avg_error_y_c = (preds[:, 0] - labels[:, 0]).mean().item()
+    avg_error_e_R = torch.abs(preds[:, 1] - labels[:, 1]).mean().item()
+    avg_error_y_c = torch.abs(preds[:, 0] - labels[:, 0]).mean().item()
 
     return eval_loss, correct_y_c/preds.shape[0], correct_e_R/preds.shape[0], avg_error_e_R, avg_error_y_c
 
@@ -76,7 +76,7 @@ total_start_time = time.time()
 
 try:
     print('-' * 90)
-    for epoch in range(1, 100+1):
+    for epoch in range(1, 1000+1):
         epoch_start_time = time.time()
         loss = train()
         train_loss.append(loss*1000.)

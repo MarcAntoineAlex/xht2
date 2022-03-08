@@ -36,7 +36,7 @@ def get_data(dtype=np.double):
     # vitesse en m/s ou cm/cs (c'est un entier)
 
 
-    s1 = "~/data/Complet_Isym_ttcapt_v36.json"
+    s1 = "/home/LAB/gaoch/data/Complet_Isym_ttcapt_v36.json"
     # Importons toutes ces fonctions d'influence dans le fichier data1
     f = open(s1)
     data1 = json.load(f)
