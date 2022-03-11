@@ -6,11 +6,8 @@ from tqdm import tqdm
 
 use_cuda = torch.cuda.is_available()
 train_loader, valid_loader = construct_dataset(V=10, batch_size=32)
-data, label = next(iter(train_loader))  # [B, L, D]
-print(data)
 model = ResNet18().double()
-# x = model(torch.randn(4, 10, 224).double())
-x = model(data.transpose(1, 2))
+
 if use_cuda:
     model.cuda()
 
@@ -44,10 +41,13 @@ def evaluate():
             correct_y_c += 1
         if torch.abs(preds[i, 1] - labels[i, 1]).item() <= 1/89:
             correct_e_R += 1
-    avg_error_e_R = torch.abs(preds[:, 1] - labels[:, 1]).mean().item()
-    avg_error_y_c = torch.abs(preds[:, 0] - labels[:, 0]).mean().item()
+    err_e_R = torch.abs(preds[:, 1] - labels[:, 1]).mean().item()
+    err_y_c = torch.abs(preds[:, 0] - labels[:, 0]).mean().item()
+    err_charge = torch.abs(preds[:, 3] - labels[:, 3]).mean().item()
+    err_v = torch.abs(preds[:, 2] - labels[:, 2]).mean().item()
 
-    return eval_loss, correct_y_c/preds.shape[0], correct_e_R/preds.shape[0], avg_error_e_R, avg_error_y_c
+
+    return eval_loss, correct_y_c/preds.shape[0], correct_e_R/preds.shape[0], err_e_R, err_y_c, err_charge, err_v
 
 def train():
     model.train()
@@ -84,12 +84,13 @@ try:
         print('| start of epoch {:3d} | time: {:2.2f}s | loss {:5.6f}'.format(epoch, time.time() - epoch_start_time, loss))
 
         epoch_start_time = time.time()
-        loss, y_c_acc, e_R_acc, avg_error_e_R, avg_error_y_c = evaluate()
+        loss, y_c_acc, e_R_acc, avg_error_e_R, avg_error_y_c, err_charge, err_v = evaluate()
         valid_loss.append(loss*1000.)
 
         print('-' * 90)
         print('| end of epoch {:3d} | time: {:2.2f}s | loss {:.4f} | y_c_acc: {:.4f} err: {:.4f}  | e_R_acc: {:.4f} err {:.4f}'.format(
-            epoch, time.time() - epoch_start_time, loss, y_c_acc, avg_error_y_c, e_R_acc, avg_error_e_R))
+            epoch, time.time() - epoch_start_time, loss, y_c_acc, avg_error_y_c, e_R_acc, avg_error_e_R)
+            + '  | err_charge: {:.4f}  |  err_v: {:.4f}'.format(err_charge, err_v))
         print('-' * 90)
 
 except KeyboardInterrupt:

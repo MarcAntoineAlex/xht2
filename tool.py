@@ -18,7 +18,7 @@ import random
 # from scipy.signal import savgol_filter
 # from scipy import interpolate
 
-def get_data(dtype=np.double):
+def get_data():
     L = 4591  # cm, longueur du pont
     Lmax = 6000 - 4591
     NI1 = L
@@ -163,16 +163,20 @@ def get_data(dtype=np.double):
 
 
 def construct_dataset(V=10, dt=1, batch_size=16):
-    dx = int(V * dt)
-    data = get_data()
-    data = data[:, :, 0:-1:dx]  # [capteur, Y, N]
-    data = data.transpose(0, 2)
+    data_raw = get_data()
     dataset_X = []
     dataset_Y = []
-    for nyd in range(89):
-        for nyg in range(nyd, 89):
-            dataset_X.append(data[:, nyg, :] + data[:, nyd, :])
-            dataset_Y.append(torch.tensor([(nyg+nyd)/2/89, (nyg-nyd)/89], dtype=torch.double))
+    for dx in range(1, 10):
+        data = data_raw[:, :, 0:-1:dx*6]  # [capteur, Y, N]
+        data = data.transpose(0, 2)
+        if dx != 1:
+            data = torch.cat([data, torch.zeros(1000 - data.shape[0], data.shape[1], 10)], dim=0)
+        for c in range(1, 10):
+            charge = c/10
+            for nyd in range(80):
+                for nyg in range(nyd, nyd+10):
+                    dataset_X.append((data[:, nyg, :] + data[:, nyd, :]) * charge)
+                    dataset_Y.append(torch.tensor([(nyg+nyd)/2/89, (nyg-nyd)/89, dx/10, charge], dtype=torch.double))
     dataset_X = torch.stack(dataset_X)
     dataset_Y = torch.stack(dataset_Y)
     # torch.save(dataset_X, 'dataset_X.pt')

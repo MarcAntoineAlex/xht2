@@ -33,7 +33,7 @@ class ResidualBlock(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, ResidualBlock, num_classes=2):
+    def __init__(self, ResidualBlock, num_classes=4):
         super(ResNet, self).__init__()
         self.inchannel = 64
         self.conv1 = nn.Sequential(
@@ -45,7 +45,8 @@ class ResNet(nn.Module):
         self.layer2 = self.make_layer(ResidualBlock, 128, 2, stride=2)
         self.layer3 = self.make_layer(ResidualBlock, 256, 2, stride=2)
         self.layer4 = self.make_layer(ResidualBlock, 512, 2, stride=2)
-        self.fc = nn.Linear(4608, num_classes)
+        self.lstm = nn.LSTM(512, 64, num_layers=2, batch_first=True)
+        self.fc = nn.Linear(992, num_classes)
 
     def make_layer(self, block, channels, num_blocks, stride):
         strides = [stride] + [1] * (num_blocks - 1)   #strides=[1,1]
@@ -60,9 +61,11 @@ class ResNet(nn.Module):
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
-        out = self.layer4(out)
-        out = F.avg_pool1d(out, 4)
-        out = out.view(out.shape[0], -1)
+        out = self.layer4(out)  # [B=32,C=512,L=36]
+        out = F.avg_pool1d(out, 4)  # [B=32,C=512,L=9]
+        out = self.lstm(out.transpose(1, 2))[0]  # [B=32,L=9,C=64]
+        out = out.reshape((out.shape[0], -1))
+
         out = self.fc(out)
         return torch.sigmoid(out)
 
